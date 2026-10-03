@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Boss Hunt - Rooms</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial Black,Arial}
+body{background:#000;display:flex;justify-content:center}
+#wrap{width:100%;max-width:480px;height:100vh;background:#111;display:flex;flex-direction:column}
+#gameArea{flex:1;position:relative;overflow:hidden}
+canvas{width:100%;height:100%;display:block}
+#top{position:absolute;top:6px;left:8px;right:8px;display:flex;justify-content:space-between;z-index:5;font-weight:900;font-size:12px;color:#fff}
+#cnt{background:#facc15;color:#000;padding:5px 10px;border-radius:15px}
+#room{background:#fff;color:#000;padding:5px 10px;border-radius:15px}
+#hp{position:absolute;top:36px;left:8px;right:8px;height:8px;background:#000;border-radius:5px;z-index:6;border:1px solid #fff;display:none}
+#hpFill{height:100%;width:100%;background:#ef4444;border-radius:5px}
+.screen{position:absolute;inset:0;background:rgba(0,0,0,.93);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px}
+.btn{background:#facc15;color:#000;border:0;padding:14px 36px;border-radius:14px;font-size:18px;font-weight:900;margin-top:12px}
+.btnAd{background:#22c55e;color:#fff;border:3px solid #fff;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:900;margin-top:10px;animation:glow 1s infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 10px #22c55e}50%{box-shadow:0 0 20px #22c55e}}
+.btn3{background:#333;color:#fff;border:0;padding:7px 14px;border-radius:8px;font-size:11px;margin-top:6px}
+#bannerWrap{width:100%;height:62px;background:#000;display:flex;align-items:center;justify-content:center;border-top:2px solid #facc15;flex-shrink:0}
+</style>
+</head>
+<body>
+<div id="wrap">
+<div id="gameArea">
+<canvas id="cv"></canvas>
+<div id="top"><div id="cnt">👤 1</div><div id="room">ROOM 1/5</div></div>
+<div id="hp"><div id="hpFill"></div></div>
+
+<div class="screen" id="startS"><h1 style="font-size:44px">BOSS<br><b style="color:#ef4444">HUNT</b></h1><p style="font-family:Arial;font-size:12px;margin:8px">5 Rooms - Hard Bullets - Find Boss</p><button class="btn" id="playBtn">HUNT ONLINE</button><button class="btnAd" id="startAd">🎁 +30 Hunters (Ad)</button></div>
+<div class="screen" id="offlineS" style="display:none"><h1>📵 OFFLINE</h1><button class="btn" id="retryBtn">RETRY</button></div>
+<div class="screen" id="winS" style="display:none"><h1 style="color:#22c55e">BOSS DEAD!</h1><p id="winT" style="font-family:Arial"></p><button class="btn" id="again1">NEXT HUNT (Ad)</button><button class="btnAd" id="ad1">💰 x2 Loot (Ad)</button></div>
+<div class="screen" id="loseS" style="display:none"><h1 style="color:#ef4444">HUNT FAILED</h1><p id="loseT" style="font-family:Arial"></p><button class="btn" id="again2">TRY AGAIN (Ad)</button><button class="btnAd" id="ad2">💪 +30 (Ad)</button></div>
+<div class="screen" id="roomS" style="display:none"><h1 id="roomTitle" style="font-size:32px">ROOM 1 CLEAR</h1><p style="font-family:Arial">Entering next room...</p><button class="btn" id="nextRoom">ENTER ➡️</button><button class="btnAd" id="roomAd">🎁 +15 Hunters (Ad)</button></div>
+</div>
+
+<div id="bannerWrap">
+<script>atOptions={'key':'4d9fbbf03a1ad076a712cf6c3d873674','format':'iframe','height':50,'width':320,'params':{}};</script>
+<script src="https://vogueaccompanimentdiscern.com/4d9fbbf03a1ad076a712cf6c3d873674/invoke.js"></script>
+</div>
+</div>
+
+<script>
+var LINK="https://vogueaccompanimentdiscern.com/ki7gtkt9?key=33d7a845d826f57a1948013b86aa4362";
+function isOnline(){return navigator.onLine;}
+function openAd(){if(!isOnline()) return; window.open(LINK,"_blank");}
+function checkOnline(){if(!isOnline()){document.getElementById('offlineS').style.display='flex'; return false;} document.getElementById('offlineS').style.display='none'; return true;}
+
+// BEST SOUNDS
+var AC=null,on=true;
+function iA(){if(!AC) AC=new(window.AudioContext||window.webkitAudioContext)();}
+function t(f,ty,v,d,f2){iA();if(!on) return;try{var o=AC.createOscillator(),g=AC.createGain();o.type=ty;o.frequency.value=f;if(f2) o.frequency.exponentialRampToValueAtTime(f2,AC.currentTime+d);g.gain.setValueAtTime(v,AC.currentTime);g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d);}catch(e){}}
+function sPop(){t(500,'square',0.7,0.06,1000); setTimeout(()=>t(1000,'square',0.5,0.07,1800),30);}
+function sGun(){t(1500,'square',0.9,0.025,600); t(100,'square',0.6,0.04,40);}
+function sHit(){t(200,'sawtooth',0.6,0.12,80);}
+function sWin(){[0,3,5,8,12].forEach((n,i)=>setTimeout(()=>t(250*Math.pow(1.3,n),'square',0.6,0.2),i*70));}
+function sLose(){t(300,'sawtooth',0.6,0.3,100); setTimeout(()=>t(150,'sawtooth',0.6,0.5,60),200);}
+
+var cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+function rs(){var ga=document.getElementById('gameArea'); cv.width=ga.clientWidth; cv.height=ga.clientHeight;} rs(); window.onresize=rs;
+
+var running=false, crowd=1, room=1, totalRooms=5, people=[], bullets=[], enemies=[], boss=null, parts=[], lane=0, touchX=0, ft=0, cycle=0;
+
+function rand(a,b){return a+Math.random()*(b-a);}
+
+function makeRoom(n){
+  enemies=[]; bullets=[]; boss=null; people=[];
+  if(n<totalRooms){
+    var count = 3+n*2;
+    for(var i=0;i<count;i++){
+      enemies.push({x:rand(60,cv.width-60), y:rand(80,cv.height-180), hp:2+n, max:2+n, type:'grunt', vx:rand(-1,1), vy:rand(-1,1)});
+    }
+  } else {
+    // BOSS ROOM
+    boss={x:cv.width/2, y:cv.height*0.3, hp:150+(room*20), max:150+(room*20), vx:1.5, vy:0.8};
+    for(var j=0;j<4;j++) enemies.push({x:rand(40,cv.width-40), y:rand(100,cv.height-300), hp:5, max:5, type:'guard'});
+  }
+  // make crowd
+  var cols=Math.ceil(Math.sqrt(crowd));
+  for(var k=0;k<crowd;k++) people.push({ox:(k%cols-cols/2)*10+rand(-3,3), oy:Math.floor(k/cols)*10+rand(-3,3), skin:'#ffdbb4', shirt:['#3b82f6','#22c55e','#facc15'][k%3], phase:Math.random()*6});
+  document.getElementById('room').textContent='ROOM '+n+'/'+totalRooms;
+  if(boss){ document.getElementById('hp').style.display='block'; document.getElementById('hpFill').style.width='100%'; }
+  else document.getElementById('hp').style.display='none';
+}
+
+function addHunters(num){ crowd=Math.min(200,crowd+num); makeRoom(room); document.getElementById('cnt').textContent='👤 '+crowd; sPop(); }
+
+function start(){
+  if(!checkOnline()) return;
+  document.getElementById('startS').style.display='none'; document.getElementById('winS').style.display='none';
+  document.getElementById('loseS').style.display='none'; document.getElementById('roomS').style.display='none';
+  document.getElementById('offlineS').style.display='none';
+  crowd=1; room=1; running=true; iA(); makeRoom(1);
+  document.getElementById('cnt').textContent='👤 1';
+}
+
+document.getElementById('playBtn').onclick=start;
+document.getElementById('startAd').onclick=()=>{openAd(); crowd+=30;};
+document.getElementById('again1').onclick=()=>{openAd(); room=1; start();};
+document.getElementById('again2').onclick=()=>{openAd(); start();};
+document.getElementById('ad1').onclick=openAd;
+document.getElementById('ad2').onclick=()=>{openAd(); addHunters(30);};
+document.getElementById('roomAd').onclick=()=>{openAd(); addHunters(15); document.getElementById('roomS').style.display='none'; running=true;};
+document.getElementById('nextRoom').onclick=()=>{document.getElementById('roomS').style.display='none'; running=true; room++; makeRoom(room);};
+document.getElementById('retryBtn').onclick=()=>{if(checkOnline()){document.getElementById('offlineS').style.display='none'; document.getElementById('startS').style.display='flex';}};
+document.getElementById('roomAd').onclick=()=>{openAd(); addHunters(15);};
+cv.addEventListener('touchstart',e=>{touchX=e.touches[0].clientX;},{passive:false});
+cv.addEventListener('touchmove',e=>{e.preventDefault(); var dx=e.touches[0].clientX-touchX; lane+=dx*0.02; lane=Math.max(-1.5,Math.min(1.5,lane)); touchX=e.touches[0].clientX;},{passive:false});
+
+// DRAW HUMAN WITH GUN
+function drawHuman(x,y,shirt,scale,flash){
+  var s=scale;
+  ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(x,y+7*s,5*s,2*s,0,0,6.28); ctx.fill();
+  ctx.fillStyle=shirt; ctx.fillRect(x-4*s,y-5*s,8*s,7*s);
+  ctx.fillStyle='#1e293b'; ctx.fillRect(x-3*s,y+2*s,2.5*s,6*s); ctx.fillRect(x+0.5*s,y+2*s,2.5*s,6*s);
+  ctx.fillStyle='#ffdbb4'; ctx.beginPath(); ctx.arc(x,y-7*s,4*s,0,6.28); ctx.fill();
+  // gun - HARD
+  ctx.fillStyle='#111'; ctx.fillRect(x+4*s,y-2*s,12*s,3*s);
+  if(flash){ ctx.fillStyle='#ff0'; ctx.fillRect(x+16*s,y-3*s,8*s,5*s); ctx.fillStyle='#fff'; ctx.fillRect(x+18*s,y-2*s,4*s,3*s); }
+}
+
+function loop(){
+  requestAnimationFrame(loop); if(!running) return; if(!isOnline()){document.getElementById('offlineS').style.display='flex'; running=false; return;}
+  cycle+=0.2; ft+=0.1;
+  var W=cv.width,H=cv.height;
+  ctx.fillStyle='#0f172a'; ctx.fillRect(0,0,W,H);
+  // room walls
+  ctx.strokeStyle='#333'; ctx.lineWidth=6; ctx.strokeRect(2,2,W-4,H-4);
+  ctx.fillStyle='#1e293b'; ctx.fillRect(0,0,W,50); // top
+  // room number
+  ctx.fillStyle='#fff'; ctx.font='bold 10px Arial'; ctx.fillText('ROOM '+room,10,20);
+
+  var cx=W*0.5+lane*90, cy=H*0.7;
+
+  // auto shoot - HARD STRAIGHT BULLETS
+  if(ft%0.06<0.03 && people.length>0){
+    for(var b=0;b<Math.min(6,Math.floor(crowd/3)+1);b++){
+      var p=people[Math.floor(Math.random()*people.length)];
+      var sx=cx+p.ox+10, sy=cy+p.oy-2;
+      var target=null;
+      if(boss) target=boss;
+      else if(enemies.length>0) target=enemies[Math.floor(Math.random()*enemies.length)];
+      if(target){
+        var ang=Math.atan2(target.y-sy,target.x-sx);
+        bullets.push({x:sx,y:sy,vx:Math.cos(ang)*22, vy:Math.sin(ang)*22, life:50, dmg:1}); // STRAIGHT SPEED 22
+      }
+    }
+    sGun();
+  }
+
+  // update bullets - HARD BARS
+  for(var i=bullets.length-1;i>=0;i--){
+    var bl=bullets[i]; bl.x+=bl.vx; bl.y+=bl.vy; bl.life--;
+    // HARD BULLET DRAW - solid rectangle, not dot
+    ctx.save();
+    ctx.translate(bl.x,bl.y);
+    ctx.rotate(Math.atan2(bl.vy,bl.vx));
+    ctx.fillStyle='#facc15'; ctx.fillRect(0,-2,18,4); // long hard bar
+    ctx.fillStyle='#fff'; ctx.fillRect(12,-1,6,2);
+    ctx.restore();
+
+    // hit enemies
+    var hit=false;
+    for(var e=enemies.length-1;e>=0;e--){
+      var en=enemies[e];
+      if(Math.hypot(bl.x-en.x, bl.y-en.y)<22){ en.hp-=bl.dmg; sHit(); bullets.splice(i,1); hit=true;
+        if(en.hp<=0){ enemies.splice(e,1); parts.push({x:en.x,y:en.y,vx:rand(-3,3),vy:rand(-4,0),life:1,col:'#ef4444'}); }
+        break;
+      }
+    }
+    if(hit) continue;
+    if(boss && Math.hypot(bl.x-boss.x, bl.y-boss.y)<38){ boss.hp-=bl.dmg; sHit(); bullets.splice(i,1); document.getElementById('hpFill').style.width=(boss.hp/boss.max*100)+'%'; parts.push({x:boss.x+rand(-10,10),y:boss.y+rand(-10,10),vx:rand(-2,2),vy:rand(-2,2),life:1,col:'#ff0'}); continue; }
+    if(bl.life<=0 || bl.x<0 || bl.x>W || bl.y<0 || bl.y>H) bullets.splice(i,1);
+  }
+
+  // enemies move
+  for(var ei=0;ei<enemies.length;ei++){
+    var en=enemies[ei];
+    en.x+=en.vx; en.y+=en.vy;
+    if(en.x<40||en.x>W-40) en.vx*=-1;
+    if(en.y<60||en.y>H-200) en.vy*=-1;
+    // draw enemy
+    ctx.fillStyle=en.type=='guard'?'#991b1b':'#ef4444';
+    ctx.beginPath(); ctx.arc(en.x,en.y,12,0,6.28); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font='bold 10px Arial'; ctx.textAlign='center'; ctx.fillText(en.hp,en.x,en.y+3);
+  }
+
+  // boss
+  if(boss){
+    boss.x+=boss.vx; boss.y+=boss.vy;
+    if(boss.x<60||boss.x>W-60) boss.vx*=-1;
+    if(boss.y<70||boss.y>H*0.5) boss.vy*=-1;
+    ctx.fillStyle='#dc2626'; ctx.beginPath(); ctx.arc(boss.x,boss.y,36,0,6.28); ctx.fill();
+    ctx.fillStyle='#ffdbb4'; ctx.beginPath(); ctx.arc(boss.x,boss.y-8,18,0,6.28); ctx.fill();
+    ctx.fillStyle='#000'; ctx.font='bold 14px Arial'; ctx.textAlign='center'; ctx.fillText('BOSS',boss.x,boss.y+6);
+    if(boss.hp<=0){
+      running=false; sWin(); document.getElementById('winT').textContent=crowd+' hunters survived all 5 rooms!'; document.getElementById('winS').style.display='flex'; return;
+    }
+  }
+
+  // draw crowd with guns
+  for(var k=0;k<people.length;k++){
+    var p=people[k]; var x=cx+p.ox, y=cy+p.oy;
+    drawHuman(x,y,p.shirt,1, ft%0.06<0.03);
+  }
+
+  // particles
+  for(var pi=parts.length-1;pi>=0;pi--){
+    var pt=parts[pi]; pt.x+=pt.vx; pt.y+=pt.vy; pt.vy+=0.2; pt.life-=0.04;
+    ctx.globalAlpha=pt.life; ctx.fillStyle=pt.col; ctx.beginPath(); ctx.arc(pt.x,pt.y,3,0,6.28); ctx.fill(); ctx.globalAlpha=1;
+    if(pt.life<=0) parts.splice(pi,1);
+  }
+
+  // room clear check
+  if(!boss && enemies.length==0){
+    if(room<totalRooms){
+      running=false;
+      document.getElementById('roomTitle').textContent='ROOM '+room+' CLEAR';
+      document.getElementById('roomS').style.display='flex';
+    }
+  }
+
+  // lose if crowd dead? crowd doesn't die here, but if boss touches crowd reduce
+  if(boss && Math.hypot(boss.x-cx,boss.y-cy)<80 && ft%0.5<0.1){
+    if(crowd>0){ crowd=Math.max(0,crowd-1); people.pop(); document.getElementById('cnt').textContent='👤 '+crowd; }
+    if(crowd<=0){ running=false; sLose(); document.getElementById('loseT').textContent='All hunters dead!'; document.getElementById('loseS').style.display='flex'; }
+  }
+}
+
+checkOnline();
+loop();
+</script>
+</body>
+</html>
